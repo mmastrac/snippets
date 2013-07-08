@@ -1,0 +1,26 @@
+<body>
+<script>
+// Returns true for all but IE10+
+var isOldIE = eval("/*@cc_on @_jscript_version || @*/ Infinity") < 9;
+if (isOldIE)
+	document.write('<p>old ie');
+else
+	document.write('<p>!old ie');
+	
+// Need CORS
+var hasCors = window.XMLHttpRequest && (typeof new XMLHttpRequest().withCredentials == "boolean");
+if (!hasCors)
+	document.write('<p>!has cors');
+else
+	document.write('<p>has cors');
+
+// Modern-ish CSS detection: text-overflow: ellipsis
+var x = document.createElement('div');
+x.style.textOverflow = 'ellipsis';
+var hasEllipsis = (x.style.textOverflow == 'ellipsis');
+if (!hasEllipsis)
+	document.write('<p>!has ellipsis');
+else
+	document.write('<p>has ellipsis');
+
+</script>
