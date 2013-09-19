@@ -1,0 +1,29 @@
+<html ng-app="app">
+	<head>
+		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.0-rc.2/angular.js"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.0-rc.2/angular-resource.js"></script>
+		<script src="vm.js"></script>
+		<link href="vm.css" rel="stylesheet"></link>
+		<link href='http://fonts.googleapis.com/css?family=Roboto+Slab' rel='stylesheet' type='text/css'>
+	</head>
+	<body ng-controller="VoicemailController">
+		<div ng-repeat="call in calls">
+			<div ng-if="call.direction == 'inbound' && call.parent_call_sid == null && call.status == 'completed'" class="call">
+				<div class="date">{{ call.start_time | date:'medium' }}</div>
+				Incoming call from: <span ng-if="call.caller_name != null" clas="caller_name">{{ call.caller_name }}</span> <span class="caller_number">{{ call.from_formatted }}</span>
+				<div ng-if="call.recordings !== undefined">
+					<div ng-repeat="recording in call.recordings">
+						<audio controls ng-src="{{ recording.absolute_audio_uri }}"></audio>
+						<div class="transcription">{{ recording.transcriptions[0].transcription_text }}</div>
+					</div>
+				</div>
+				<div ng-if="call.recordings === undefined" class="transcription">
+					(loading)
+				</div>
+				<div ng-if="call.recordings === null || call.recordings.length == 0" class="transcription">
+					(no message)
+				</div>
+			</div>
+		</div>
+	</body>
+</html>
