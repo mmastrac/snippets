@@ -7,46 +7,85 @@
 # Important: make sure the script has correct permission policy to read this list!
 :global "static-hosts"
 
+# Attempt to load static-hosts from disk
+if ([:typeof $"static-hosts"] != "array") do={
+  /import file-name=static-hosts.txt
+  if ([:typeof $"static-hosts"] != "array") do={
+    set "static-hosts" [:toarray ""];
+    :log info "Initialized new static-hosts array"
+  } else={
+    :log info "Loaded static-hosts array from static-hosts.txt"
+  }
+}
+
 ####################################
 # Global helper functions
 ####################################
 
 # Install some helper functions in the global script environment
 
-# $"add-static-dns" mac-addr "hostname"
-:global "add-static-dns" do={ 
+:global "static-dns" do={ 
   :global "static-hosts"; 
-  :set ($"static-hosts"->[:tostr $1]) $2; 
-  :put ("Added mac = ".$1." host = ".$2); 
-}
 
-# $"remove-static-dns" mac-addr
-:global "remove-static-dns" do={
-  :global "static-hosts"; 
-  
-  # Is there a better way to create an empty array?
-  :local new [:toarray ""]
-  
-  :foreach k,v in=$"static-hosts" do={
-    if ($k!=[:tostr $1]) do={
-      :set ($new->$k) $v;
-    } else={
-      :put ("Removed mac = ".$k." host = ".$v); 
+  if ([:typeof $1] != "str") do={
+    :put "$0 \"add\" mac-addr \"hostname\"";
+    :put "$0 \"remove\"";
+    :put "$0 \"print\"";
+  }
+
+  # $"static-dns" "add" mac-addr "hostname"
+  if ($1="add") do={
+    :set ($"static-hosts"->[:tostr $2]) $3; 
+    :put ("Added mac = $2, host = $3"); 
+  }
+
+  # $"static-dns" remove mac-addr
+  if ($1="remove") do={
+    # Is there a better way to create an empty array?
+    :local new [:toarray ""]
+    :local found false
+    
+    :foreach k,v in=$"static-hosts" do={
+      if ($k!=[:tostr $2]) do={
+        :set ($new->$k) $v;
+      } else={
+        :put ("Removed mac = $k, host = $v");
+        :set found true 
+      }
+    }
+
+    :if (!$found) do={
+      :put "Unable to locate mac $2";
+    }
+
+    :global "static-hosts" $new
+  }
+
+  # $"static-dns" print
+  if ($1="print") do={
+    :put "MAC              \tHostname";
+    :foreach k,v in=$"static-hosts" do={
+      :put ($k."\t".$v);
     }
   }
 
-  :global "static-hosts" $new
-}
+  :local filecontents ":global \"static-hosts\" [:toarray \"\"]\r\n"
 
-# $"print-static-dns"
-:global "print-static-dns" do={ 
-  :global "static-hosts"
-  :put "MAC              \tHostname";
   :foreach k,v in=$"static-hosts" do={
-    :put ($k."\t".$v);
+    :set filecontents ($filecontents.":set (\$\"static-hosts\"->\"$k\") \"$v\"\r\n");
   }
-}
 
+  :if ([/file get "static-hosts.txt" contents] != $filecontents) do={
+    # Create the static-hosts.txt file using an interface list, then wait for it to appear
+    /interface print file=static-hosts.txt
+    :while ([:typeof [/file get "static-hosts.txt" name]] != "str") do={
+      delay 25ms;
+    }
+
+    /file set "static-hosts.txt" contents=$filecontents
+    :put "Wrote static-hosts.txt"
+  }
+} 
 
 ####################################
 # Utility functions
