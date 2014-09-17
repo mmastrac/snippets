@@ -246,7 +246,14 @@ if ([:typeof $"static-hosts"] != "array") do={
 
       # No hostname, so use the mac
       :if ([ :len $hostname ] = 0) do={
-        :set hostname ("mac".[$cleanmac $mac]);
+        :local vms { "00163E"="xen"; "000C29"="vmware"; "005056"="vmware" }
+        :local cleanedmac [$cleanmac $mac]
+        :local type ($vms->([:pick $cleanedmac 0 6])) 
+        :if ([:typeof $type]="str") do={
+          :set hostname ($type . $cleanedmac);
+        } else={
+          :set hostname "mac$cleanedmac";
+        }
       }
 
       :set hostname ( $hostname . "." . $config->"zone" );
