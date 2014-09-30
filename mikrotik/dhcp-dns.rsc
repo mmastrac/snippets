@@ -232,7 +232,7 @@ if ([:typeof $"static-hosts"] != "array") do={
     :set mac [ get $i mac-address ]
 
     # Some devices can end up with a nil mac-address for some reason -- just ignore those
-    :if ($mac != nil) do={
+    :if ([:typeof $mac] != "nil") do={
       :set ip [ get $i address ];
 
       # Allow the static host name to be overridden by global static-hosts
