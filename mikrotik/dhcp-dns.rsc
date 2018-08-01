@@ -29,7 +29,7 @@ if ([:typeof $"static-hosts"] != "array") do={
 
   if ([:typeof $1] != "str") do={
     :put "$0 \"add\" mac-addr \"hostname\"";
-    :put "$0 \"remove\"";
+    :put "$0 \"remove\" mac-addr";
     :put "$0 \"print\"";
   }
 
@@ -228,7 +228,7 @@ if ([:typeof $"static-hosts"] != "array") do={
   :log debug ("Starting dynamic update addition");
 
   /ip dhcp-server lease;
-  :foreach i in=[find] do={
+  :foreach i in=[find server="dhcp-main"] do={
     :set mac [ get $i mac-address ]
 
     # Some devices can end up with a nil mac-address for some reason -- just ignore those
