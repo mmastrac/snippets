@@ -224,6 +224,8 @@ if ([:typeof $"static-hosts"] != "array") do={
   :local hostname
   :local mac
   :local ip
+  # Ensures that we only update one host per name to avoid thrashing
+  :local found [:toarray ""]
 
   :log debug ("Starting dynamic update addition");
 
@@ -256,19 +258,23 @@ if ([:typeof $"static-hosts"] != "array") do={
         }
       }
 
-      :set hostname ( $hostname . "." . $config->"zone" );
+      :if ($found->$hostname = nil) do={
+        :set ($found->$hostname) $mac;
+        :set hostname ( $hostname . "." . $config->"zone" );
 
-      # Update the DHCP entry's comment if it's different
-      :if ([get $i comment] != $hostname) do={
-        set $i comment $hostname;
+        # Update the DHCP entry's comment if it's different
+        :if ([get $i comment] != $hostname) do={
+          set $i comment $hostname;
+        };
+
+        # Update DNS entry
+        $updatednsentry config=$config mac=$mac ip=$ip hostname=$hostname;
+      } else={
+        :log debug ("Ignoring duplicate hostname ".$hostname.".")
       };
-
-      # Update DNS entry
-      $updatednsentry config=$config mac=$mac ip=$ip hostname=$hostname;
     }
   }
 }
-
 
 :log debug ("DNS/DHCP sync. Static host count = ".[:len $"static-hosts"]);
 
